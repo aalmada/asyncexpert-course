@@ -31,19 +31,28 @@ namespace Dotnetos.AsyncExpert.Homework.Module01.UnitTests
 
         [Theory]
         [MemberData(nameof(FibonacciData))]
-        public void Iterative(ulong value, ulong expected)
+        public void RecursiveWithMemoization(ulong value, ulong expected)
         {
             var fibonnaci = new FibonacciCalc();
-            var result = fibonnaci.Iterative(value);
+            var result = fibonnaci.RecursiveWithMemoization(value);
             Assert.Equal(expected, result);
         }
 
         [Theory]
         [MemberData(nameof(FibonacciData))]
-        public void RecursiveWithMemoization(ulong value, ulong expected)
+        public void RecursiveWithMemoizationPool(int value, ulong expected)
         {
             var fibonnaci = new FibonacciCalc();
-            var result = fibonnaci.RecursiveWithMemoization(value);
+            var result = fibonnaci.RecursiveWithMemoizationPool(value);
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [MemberData(nameof(FibonacciData))]
+        public void Iterative(ulong value, ulong expected)
+        {
+            var fibonnaci = new FibonacciCalc();
+            var result = fibonnaci.Iterative(value);
             Assert.Equal(expected, result);
         }
     }
