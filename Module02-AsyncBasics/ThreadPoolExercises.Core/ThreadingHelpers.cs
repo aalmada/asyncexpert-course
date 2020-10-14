@@ -12,7 +12,7 @@ namespace ThreadPoolExercises.Core
             // * In a loop, check whether `token` is not cancelled
             // * If an `action` throws and exception (or token has been cancelled) - `errorAction` should be invoked (if provided)
 
-            var thread = new Thread(new ThreadStart(() =>
+            var thread = new Thread(() =>
             {
                 try
                 {
@@ -27,7 +27,7 @@ namespace ThreadPoolExercises.Core
                     if (errorAction is object)
                         errorAction(ex);
                 }
-            }));
+            });
 
             thread.Start();
             thread.Join();
@@ -42,26 +42,26 @@ namespace ThreadPoolExercises.Core
 
             var autoResetEvent = new AutoResetEvent(false);
 
-            _ = ThreadPool.QueueUserWorkItem(state =>
+            _ = ThreadPool.QueueUserWorkItem(static state =>
             {
                 try
                 {
-                    for (var counter = repeats; counter != 0; --counter)
+                    for (var counter = state.repeats; counter != 0; --counter)
                     {
-                        token.ThrowIfCancellationRequested();
-                        action();
+                        state.token.ThrowIfCancellationRequested();
+                        state.action();
                     }
                 }
                 catch(Exception ex)
                 {
-                    if (errorAction is object)
-                        errorAction(ex);
+                    if (state.errorAction is not null)
+                        state.errorAction(ex);
                 }
                 finally
                 {
-                    _ = autoResetEvent.Set();
+                    _ = state.autoResetEvent.Set();
                 }
-            });
+            }, (action, repeats, token, errorAction, autoResetEvent), true);
 
             _ = autoResetEvent.WaitOne();
         }

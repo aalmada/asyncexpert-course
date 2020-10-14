@@ -7,6 +7,7 @@ using ThreadPoolExercises.Core;
 
 namespace ThreadPoolExercises.Benchmarks
 {
+    [MemoryDiagnoser]
     public class ThreadingHelpersBenchmarks
     {
         private SHA256 sha256 = SHA256.Create();
