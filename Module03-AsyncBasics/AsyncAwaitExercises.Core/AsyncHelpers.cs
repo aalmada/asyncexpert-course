@@ -50,10 +50,10 @@ namespace AsyncAwaitExercises.Core
             }
 
             if (maxTries < 2)
-                throw new ArgumentException("Must be at least 2", nameof(maxTries));
+                return Task.FromException<string>(new ArgumentException("Must be at least 2", nameof(maxTries)));
 
             if (token.IsCancellationRequested)
-                throw new TaskCanceledException();
+                return Task.FromCanceled<string>(token);
 
             return GetStringWithRetriesInternal(client, url, maxTries, token);
         }
