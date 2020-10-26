@@ -55,5 +55,14 @@ namespace Dotnetos.AsyncExpert.Homework.Module01.UnitTests
             var result = fibonnaci.Iterative(value);
             Assert.Equal(expected, result);
         }
+
+        [Theory]
+        [MemberData(nameof(FibonacciData))]
+        public void ReverseRecursive(ulong value, ulong expected)
+        {
+            var fibonnaci = new FibonacciCalc();
+            var result = fibonnaci.ReverseRecursive(value);
+            Assert.Equal(expected, result);
+        }
     }
 }

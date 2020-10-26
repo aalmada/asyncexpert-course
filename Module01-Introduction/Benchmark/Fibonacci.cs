@@ -93,14 +93,34 @@ namespace Dotnetos.AsyncExpert.Homework.Module01.Benchmark
         [ArgumentsSource(nameof(Data))]
         public ulong Iterative(ulong n)
         {
-            var (x, y, z) = (1ul, 1ul, 1ul);
+            var (value, penultimate, antepenultimate) = (1ul, 1ul, 1ul);
             for (var i = 2ul; i < n; ++i)
             {
-                x = y + z;
-                z = y;
-                y = x;
+                value = penultimate + antepenultimate;
+                antepenultimate = penultimate;
+                penultimate = value;
             }
-            return x;
+            return value;
+        }
+
+        [Benchmark]
+        [ArgumentsSource(nameof(Data))]
+        public ulong ReverseRecursive(ulong n)
+        {
+            static ulong ReverseRecursive(ulong n, ulong current, ulong penultimate, ulong antepenultimate)
+            {
+                var value = penultimate + antepenultimate;
+                if (current == n)
+                    return value;
+
+                return ReverseRecursive(n, current + 1, value, penultimate);
+            }
+
+            return n switch
+            {
+                1 or 2 => 1,
+                _ => ReverseRecursive(n, 3, 1, 1)
+            };
         }
 
         public IEnumerable<ulong> Data()
