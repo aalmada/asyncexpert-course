@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -23,6 +24,16 @@ namespace TaskCombinatorsExercises.Core
         public static async Task<string> ConcurrentDownloadAsync(this HttpClient httpClient,
             string[] urls, int millisecondsTimeout, CancellationToken token)
         {
+            // this helper method removes the need to materialize the collection
+            // requiring just one enumerator allocation
+            static IEnumerable<Task<HttpResponseMessage>> GetTasks(HttpClient httpClient, string[] urls, CancellationToken token, Task<HttpResponseMessage> timeoutTask)
+            {
+                for (var index = 0; index < urls.Length; index++)
+                    yield return httpClient.GetAsync(urls[index], token);
+
+                yield return timeoutTask;
+            }
+
             using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
 
             var timeoutTask = Task.Run(async () =>
@@ -32,9 +43,8 @@ namespace TaskCombinatorsExercises.Core
                 return default(HttpResponseMessage);
             }, cancellationTokenSource.Token);
 
-            var tasks = urls.Select(url => httpClient.GetAsync(url, cancellationTokenSource.Token));
-
-            var completedTask = await Task.WhenAny(EnumerableEx.Return(timeoutTask).Concat(tasks)).ConfigureAwait(false);
+            var tasks = GetTasks(httpClient, urls, cancellationTokenSource.Token, timeoutTask);
+            var completedTask = await Task.WhenAny(tasks).ConfigureAwait(false);
             if (completedTask == timeoutTask)
                 throw new TaskCanceledException();
 
