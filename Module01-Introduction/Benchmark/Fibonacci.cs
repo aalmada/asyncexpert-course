@@ -105,21 +105,21 @@ namespace Dotnetos.AsyncExpert.Homework.Module01.Benchmark
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
-        public ulong ReverseRecursive(ulong n)
+        public ulong TailRecursive(ulong n)
         {
-            static ulong ReverseRecursive(ulong n, ulong current, ulong penultimate, ulong antepenultimate)
+            static ulong TailRecursive(ulong n, ulong current, ulong penultimate, ulong antepenultimate)
             {
                 var value = penultimate + antepenultimate;
                 if (current == n)
                     return value;
 
-                return ReverseRecursive(n, current + 1, value, penultimate);
+                return TailRecursive(n, current + 1, value, penultimate);
             }
 
             return n switch
             {
                 1 or 2 => 1,
-                _ => ReverseRecursive(n, 3, 1, 1)
+                _ => TailRecursive(n, 3, 1, 1)
             };
         }
 

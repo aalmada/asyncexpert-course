@@ -58,10 +58,10 @@ namespace Dotnetos.AsyncExpert.Homework.Module01.UnitTests
 
         [Theory]
         [MemberData(nameof(FibonacciData))]
-        public void ReverseRecursive(ulong value, ulong expected)
+        public void TailRecursive(ulong value, ulong expected)
         {
             var fibonnaci = new FibonacciCalc();
-            var result = fibonnaci.ReverseRecursive(value);
+            var result = fibonnaci.TailRecursive(value);
             Assert.Equal(expected, result);
         }
     }
