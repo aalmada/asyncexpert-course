@@ -24,38 +24,23 @@ namespace TaskCombinatorsExercises.Core
         public static async Task<string> ConcurrentDownloadAsync(this HttpClient httpClient,
             string[] urls, int millisecondsTimeout, CancellationToken token)
         {
-            // this helper method removes the need to materialize the collection, requiring just one enumerator allocation
-            static IEnumerable<Task<HttpResponseMessage>> GetTasks(HttpClient httpClient, string[] urls, CancellationToken token, Task<HttpResponseMessage> timeoutTask)
-            {
-                for (var index = 0; index < urls.Length; index++)
-                    yield return httpClient.GetAsync(urls[index], token);
-
-                yield return timeoutTask; // should this be the last task to start?
-            }
-
-            // allow cancellation from external and internal tokens
-            using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
-
-            // a timeout Task<HttpResponseMessage> so that it can be concatenated with other tasks
-            var timeoutTask = Task.Run(async () =>
-            {
-                await Task.Delay(millisecondsTimeout, cancellationTokenSource.Token).ConfigureAwait(false);
-                return default(HttpResponseMessage);
-            }, cancellationTokenSource.Token);
+            // allow cancellation from external and time out tokens
+            using var timeOutTokenSource = new CancellationTokenSource(millisecondsTimeout);
+            using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token, timeOutTokenSource.Token);
 
             // get the first task to complete
-            var tasks = GetTasks(httpClient, urls, cancellationTokenSource.Token, timeoutTask);
+            var tasks = urls.Select(url => httpClient.GetAsync(url, cancellationTokenSource.Token));
             var completedTask = await Task.WhenAny(tasks).ConfigureAwait(false);
 
             // cancel all other tasks
-            cancellationTokenSource.Cancel(); 
+            cancellationTokenSource.Cancel();
 
-            // check if it was explicitly cancelled or timeoutTask was the first to complete
-            if (token.IsCancellationRequested || completedTask == timeoutTask)
-                throw new TaskCanceledException();
-
-            // get the result string
+            // get the response message
+            // throws TaskCanceledException if task was cancelled
             var responseMessage = await completedTask.ConfigureAwait(false);
+
+            // get the content string
+            _ = responseMessage.EnsureSuccessStatusCode();
             return await responseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
         }
     }
