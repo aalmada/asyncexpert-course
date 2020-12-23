@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -23,7 +24,24 @@ namespace TaskCombinatorsExercises.Core
         public static async Task<string> ConcurrentDownloadAsync(this HttpClient httpClient,
             string[] urls, int millisecondsTimeout, CancellationToken token)
         {
-            return String.Empty;
+            // allow cancellation from external and time out tokens
+            using var timeOutTokenSource = new CancellationTokenSource(millisecondsTimeout);
+            using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token, timeOutTokenSource.Token);
+
+            // get the first task to complete
+            var tasks = urls.Select(url => httpClient.GetAsync(url, cancellationTokenSource.Token));
+            var completedTask = await Task.WhenAny(tasks).ConfigureAwait(false);
+
+            // cancel all other tasks
+            cancellationTokenSource.Cancel();
+
+            // get the response message
+            // throws TaskCanceledException if task was cancelled
+            var responseMessage = await completedTask.ConfigureAwait(false);
+
+            // get the content string
+            _ = responseMessage.EnsureSuccessStatusCode();
+            return await responseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
         }
     }
 }
